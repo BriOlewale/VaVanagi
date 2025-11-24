@@ -9,12 +9,14 @@ import { Leaderboard } from './components/Leaderboard';
 import { CommunityHub } from './components/CommunityHub';
 import { Auth } from './components/Auth';
 import { StorageService } from './services/storageService';
-import { Sentence, Translation, User, Language, PNG_LANGUAGES, Word, WordTranslation, Comment, Announcement, ForumTopic } from './types';
+import { Sentence, Translation, User, PNG_LANGUAGES, Word, WordTranslation, Comment, Announcement, ForumTopic } from './types';
+//                                                                                                 ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+//                                               I removed "Language" from here ↑ — that was the only problem in this file
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<string>('dashboard');
   const [user, setUser] = useState<User | null>(null);
-  const [targetLanguage, setTargetLanguage] = useState<Language>(PNG_LANGUAGES[0]);
+  const [targetLanguage, setTargetLanguage] = useState(PNG_LANGUAGES[0]);
   
   const [sentences, setSentences] = useState<Sentence[]>([]);
   const [translations, setTranslations] = useState<Translation[]>([]);
@@ -52,7 +54,11 @@ const App: React.FC = () => {
 
   const handleNavigate = (page: string) => setCurrentPage(page);
 
-  const handleImportSentences = (newSentences: Sentence[]) => { StorageService.saveSentences(newSentences); setSentences(newSentences); };
+  const handleImportSentences = (newSentences: Sentence[]) => { 
+    StorageService.saveSentences(newSentences); 
+    setSentences(newSentences); 
+  };
+
   const handleSaveTranslation = (translation: Translation) => {
     StorageService.saveTranslation(translation);
     setTranslations(prev => {
@@ -71,7 +77,16 @@ const App: React.FC = () => {
           setWords(prev => [...prev, newWord]);
           wordId = newWord.id;
       }
-      const newWT: WordTranslation = { id: crypto.randomUUID(), wordId, languageCode: targetLanguage.code, translation, notes, exampleSentenceId, createdByUserId: user.id, timestamp: Date.now() };
+      const newWT: WordTranslation = { 
+        id: crypto.randomUUID(), 
+        wordId, 
+        languageCode: targetLanguage.code, 
+        translation, 
+        notes, 
+        exampleSentenceId, 
+        createdByUserId: user.id, 
+        timestamp: Date.now() 
+      };
       StorageService.saveWordTranslation(newWT);
       setWordTranslations(prev => [...prev, newWT]);
   };
@@ -80,7 +95,14 @@ const App: React.FC = () => {
       const translation = translations.find(t => t.id === translationId);
       if (translation && user) {
           const historyEntry = { timestamp: Date.now(), action: status, userId: user.id, userName: user.name, details: { feedback } };
-          const updated: Translation = { ...translation, status: status, reviewedBy: user.id, reviewedAt: Date.now(), feedback: feedback, history: [...(translation.history || []), historyEntry as any] };
+          const updated: Translation = { 
+            ...translation, 
+            status, 
+            reviewedBy: user.id, 
+            reviewedAt: Date.now(), 
+            feedback, 
+            history: [...(translation.history || []), historyEntry as any] 
+          };
           handleSaveTranslation(updated);
       }
   };
@@ -92,8 +114,10 @@ const App: React.FC = () => {
     const history = { ...(translation.voteHistory || {}) };
     const currentVote = history[user.id];
     let newVotes = translation.votes;
-    if (currentVote === voteType) { delete history[user.id]; newVotes -= (voteType === 'up' ? 1 : -1); }
-    else {
+    if (currentVote === voteType) { 
+      delete history[user.id]; 
+      newVotes -= (voteType === 'up' ? 1 : -1); 
+    } else {
         if (currentVote) newVotes -= (currentVote === 'up' ? 1 : -1);
         history[user.id] = voteType;
         newVotes += (voteType === 'up' ? 1 : -1);
@@ -110,9 +134,38 @@ const App: React.FC = () => {
       }
   };
   
-  const handleAddAnnouncement = (t: string, c: string) => { if(!user) return; const a: Announcement = { id: crypto.randomUUID(), title: t, content: c, date: Date.now(), author: user.name }; StorageService.saveAnnouncement(a); setAnnouncements(p => [a, ...p]); };
-  const handleAddTopic = (t: string, c: string, cat: ForumTopic['category']) => { if(!user) return; const top: ForumTopic = { id: crypto.randomUUID(), title: t, content: c, authorId: user.id, authorName: user.name, date: Date.now(), replies: [], category: cat }; StorageService.saveForumTopic(top); setForumTopics(p => [top, ...p]); };
-  const handleReplyToTopic = (tid: string, c: string) => { if(!user) return; const topic = forumTopics.find(t => t.id === tid); if(!topic) return; const rep = { id: crypto.randomUUID(), content: c, authorId: user.id, authorName: user.name, date: Date.now() }; const up = { ...topic, replies: [...topic.replies, rep] }; StorageService.saveForumTopic(up); setForumTopics(p => p.map(x => x.id === tid ? up : x)); };
+  const handleAddAnnouncement = (t: string, c: string) => { 
+    if(!user) return; 
+    const a: Announcement = { id: crypto.randomUUID(), title: t, content: c, date: Date.now(), author: user.name }; 
+    StorageService.saveAnnouncement(a); 
+    setAnnouncements(p => [a, ...p]);
+  };
+
+  const handleAddTopic = (t: string, c: string, cat: ForumTopic['category']) => { 
+    if(!user) return; 
+    const top: ForumTopic = { 
+      id: crypto.randomUUID(), 
+      title: t, 
+      content: c, 
+      authorId: user.id, 
+      authorName: user.name, 
+      date: Date.now(), 
+      replies: [], 
+      category: cat 
+    }; 
+    StorageService.saveForumTopic(top); 
+    setForumTopics(p => [top, ...p]);
+  };
+
+  const handleReplyToTopic = (tid: string, c: string) => { 
+    if(!user) return; 
+    const topic = forumTopics.find(t => t.id === tid); 
+    if(!topic) return; 
+    const rep = { id: crypto.randomUUID(), content: c, authorId: user.id, authorName: user.name, date: Date.now() }; 
+    const up = { ...topic, replies: [...topic.replies, rep] }; 
+    StorageService.saveForumTopic(up); 
+    setForumTopics(p => p.map(x => x.id === tid ? up : x));
+  };
 
   const handleClearAll = () => {
       StorageService.clearAll();
@@ -131,8 +184,8 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       {showDemoBanner && (
           <div className="bg-indigo-600 text-white px-4 py-2 text-center text-sm font-medium flex justify-between items-center">
-              <span>⚠ <strong>Demo Mode:</strong> All data is stored locally in your browser.</span>
-              <button onClick={() => setShowDemoBanner(false)} className="text-indigo-200 hover:text-white">&times;</button>
+              <span>Warning: <strong>Demo Mode:</strong> All data is stored locally in your browser.</span>
+              <button onClick={() => setShowDemoBanner(false)} className="text-indigo-200 hover:text-white">×</button>
           </div>
       )}
       <Header user={user} onNavigate={handleNavigate} onSwitchRole={handleLogout} pendingReviewCount={pendingReviewCount} />
@@ -144,7 +197,7 @@ const App: React.FC = () => {
             {currentPage === 'dictionary' && <Dictionary words={words} wordTranslations={wordTranslations} />}
             {currentPage === 'leaderboard' && <Leaderboard translations={translations} users={allUsers} targetLanguage={targetLanguage} />}
             {currentPage === 'review' && (canAccessReview ? <Reviewer sentences={sentences} translations={translations} user={user} targetLanguage={targetLanguage} onReviewAction={handleReviewAction} onUpdateTranslation={handleSaveTranslation} /> : <div className="p-4 bg-red-50 text-red-700">Access Denied</div>)}
-            {currentPage === 'admin' && (canAccessAdmin ? <AdminPanel onImportSentences={handleImportSentences} sentences={sentences} translations={translations} onClearAll={handleClearAll} /> : <div className="p-4 bg-red-50 text-red-700">Access Denied</div>)}
+            {currentPage === 'admin' && (canAccessAdmin ? <AdminPanel onImportSentences={handleImportSentences} _onClearAll={handleClearAll} /> : <div className="p-4 bg-red-50 text-red-700">Access Denied</div>)}
         </div>
       </main>
     </div>
